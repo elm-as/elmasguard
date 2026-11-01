@@ -63,6 +63,21 @@ func evaluateExitCode(violations []rules.Violation, strict bool) int {
 	return 0
 }
 
+// normalizeCliArgs defaults dangling "-path" or "--path" flags to "." and extracts positional path.
+func normalizeCliArgs(args []string) []string {
+	normalized := make([]string, 0, len(args)+1)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		isPathFlag := arg == "-path" || arg == "--path"
+		if isPathFlag && (i+1 >= len(args) || (len(args[i+1]) > 0 && args[i+1][0] == '-')) {
+			normalized = append(normalized, arg, ".")
+			continue
+		}
+		normalized = append(normalized, arg)
+	}
+	return normalized
+}
+
 // Execute runs the elmasguard CLI workflow from args.
 func Execute(args []string) int {
 	flags := flag.NewFlagSet("elmasguard", flag.ContinueOnError)
@@ -72,16 +87,21 @@ func Execute(args []string) int {
 	installHook := flags.Bool("install-hook", false, "Installer automatiquement le hook Git pre-commit")
 	targetDir := flags.String("path", ".", "Répertoire racine à auditer")
 
-	if err := flags.Parse(args); err != nil {
+	if err := flags.Parse(normalizeCliArgs(args)); err != nil {
 		fmt.Fprintf(os.Stderr, "Erreur arguments : %v\n", err)
 		return 2
 	}
 
-	if *installHook {
-		return installGitPreCommitHook(*targetDir)
+	resolvedDir := *targetDir
+	if resolvedDir == "." && flags.NArg() > 0 {
+		resolvedDir = flags.Arg(0)
 	}
 
-	violations, count, err := scanner.ScanWorkspace(*targetDir)
+	if *installHook {
+		return installGitPreCommitHook(resolvedDir)
+	}
+
+	violations, count, err := scanner.ScanWorkspace(resolvedDir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Erreur lors du scan : %v\n", err)
 		return 2

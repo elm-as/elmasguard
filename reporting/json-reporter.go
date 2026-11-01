@@ -43,3 +43,4 @@ func RenderJsonReport(writer io.Writer, violations []rules.Violation, filesScann
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(summary)
 }
+

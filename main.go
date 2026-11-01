@@ -10,3 +10,4 @@ func main() {
 	exitCode := cli.Execute(os.Args[1:])
 	os.Exit(exitCode)
 }
+

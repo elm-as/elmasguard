@@ -24,3 +24,4 @@ type FileContext struct {
 	FileName     string
 	Lines        []string
 }
+

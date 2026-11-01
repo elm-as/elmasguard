@@ -1,0 +1,12 @@
+# Binaries
+*.exe
+*.dll
+*.o
+*.a
+bin/
+dist/
+
+# OS / IDE
+.vscode/
+.idea/
+*.log
